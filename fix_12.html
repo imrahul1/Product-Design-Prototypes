@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEMPLE · Precision OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;900&family=Barlow:wght@200;300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg:    #080C11;
+  --s1:    #0F151D;
+  --s2:    #151C26;
+  --s3:    #1B2431;
+  --s4:    #222C3A;
+  --b1:    #1E2734;
+  --b2:    #2A3546;
+  --b3:    #364458;
+  --o:     #FF5500;
+  --cu:    #2DD4BF;
+  --cuc:   rgba(45, 212, 191, 0.12);
+  --cug:   rgba(45, 212, 191, 0.30);
+  --cu2:   #2DD4BF;
+  --cu3:   #14B8A6;
+  --good:  #2DD4BF;
+  --gc:    rgba(45, 212, 191, 0.12);
+  --warn:  #8BA8C4;
+  --wc:    rgba(139, 168, 196, 0.12);
+  --crit:  #EF4444; 
+  --cc:    rgba(239, 68, 68, 0.12);
+  --w:     #F8FAFC;
+  --w2:    #CBD5E1;
+  --w3:    #94A3B8;
+  --w4:    #64748B;
+  --bc: 'Barlow Condensed', sans-serif;
+  --bar: 'Barlow', sans-serif;
+  --mono: 'Space Mono', monospace;
+}
+
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:1000; opacity:0.55;
+}
+
+body{
+  background: var(--bg);
+  display:flex;justify-content:center;align-items:flex-start;
+  min-height:100vh;padding:40px 20px;font-family:var(--bar);
+}
+
+.phone{
+  width:375px;height:790px;
+  background:var(--bg);border-radius:44px;
+  border:1px solid var(--b1);
+  overflow:hidden;display:flex;flex-direction:column;
+  position:relative;
+  box-shadow: 0 0 0 1px #05080b, 0 80px 160px rgba(0,0,0,0.95), 0 0 80px rgba(45, 212, 191, 0.02), inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#000;border-radius:0 0 20px 20px;z-index:50;}
+
+.status{display:flex;justify-content:space-between;align-items:center;padding:16px 24px 0;flex-shrink:0;position:relative;z-index:10;}
+.st{font-family:var(--mono);font-size:10px;color:var(--w3);margin-top:8px;letter-spacing:.5px;}
+.st-live{display:flex;align-items:center;gap:5px;font-family:var(--bc);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--cu);margin-top:8px;}
+.st-live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--cu);box-shadow:0 0 6px var(--cug);animation:cu-beat 2s infinite;}
+@keyframes cu-beat{0%,100%{opacity:1}50%{opacity:.3}}
+
+.screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 20px 32px; flex-direction:column;gap:10px;scrollbar-width:none;position:relative;z-index:1;}
+.screen::-webkit-scrollbar{display:none}
+.screen.active{display:flex;animation:appear .3s cubic-bezier(.22,1,.36,1);}
+@keyframes appear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.nav{display:flex;justify-content:space-around;align-items:center;padding:9px 0 18px;background:rgba(8,12,17,0.98);border-top:1px solid var(--b1);flex-shrink:0;position:relative;z-index:10;}
+.ni{display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--bc);font-size:7px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--w4);cursor:pointer;padding:4px 7px;transition:all .2s;}
+.ni svg{width:17px;height:17px;stroke-width:1.5;}
+.ni.active{color:var(--cu);}
+
+.eyebrow{font-family:var(--bc);font-size:9px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--cu);text-shadow:0 0 10px var(--cug);}
+.h1{font-family:var(--bc);font-size:26px;font-weight:900;color:var(--w);line-height:1.05;text-transform:uppercase;letter-spacing:.5px;}
+
+.cbf-hero, .readout, .stat-row, .card-cu, .dual-gauge, 
+.insight-block, .wave-card, .bm-item, .seg-ctrl, .card, .cause-grid, 
+.sec-t, .al, .action, .stat-box, .dg-card, .cc, .chart-container {
+  flex-shrink: 0 !important;
+}
+
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:6px;padding:14px 16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;}
+.card.open{border-color:var(--b3);background:var(--s2);}
+.card-cu{background:var(--s1);border:1px solid var(--cuc);border-left:2px solid var(--cu);border-radius:6px;padding:14px 16px;}
+.clabel{font-family:var(--bc);font-size:8px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--w3);margin-bottom:11px;display:flex;justify-content:space-between;align-items:center;padding-bottom:9px;border-bottom:1px solid var(--b1);}
+
+.chip{font-family:var(--bc);font-size:7px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 8px;border-radius:2px;display:inline-flex;align-items:center;gap:4px;}
+.chip-cu  {background:var(--cuc);color:var(--cu);border:1px solid var(--cuc);}
+.chip-good{background:var(--gc);color:var(--good);border:1px solid var(--gc);}
+.chip-warn{background:var(--wc);color:var(--warn);border:1px solid var(--wc);}
+.chip-crit{background:var(--cc);color:var(--crit);border:1px solid var(--cc);}
+.chip-neu {background:var(--s2);color:var(--w3);border:1px solid var(--b1);}
+
+.btn-cu{background:var(--s4);color:var(--w);border:1px solid var(--b2);border-radius:3px;padding:13px;text-align:center;font-family:var(--bc);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:background 0.2s;}
+.btn-cu:hover{background:var(--b2);}
+
+.gauge{width:180px;height:180px;position:relative;margin: 10px auto;}
+.gauge svg{width:180px;height:180px;}
+.gauge-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.gauge-num{font-family:var(--mono);font-size:64px;font-weight:700;line-height:1;letter-spacing:-2px;}
+.gauge-unit{font-family:var(--bc);font-size:9px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--w3);margin-top:2px;line-height:1.3;}
+
+.expand-content { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--b1); font-size: 11px; font-weight: 300; color: var(--w2); line-height: 1.6; }
+.open .expand-content { display: block; }
+.tap-to-learn { font-family:var(--bc); font-size:7px; color:var(--w3); margin-top:6px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; }
+
+/* ══════════════════════════
+   HOME COMPONENTS
+══════════════════════════ */
+.cbf-hero{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:24px 18px;text-align:center;}
+.readout{display:flex;border:1px solid var(--b1);border-radius:4px;overflow:hidden;margin-top:16px;}
+.rbox{flex:1;padding:8px 10px;background:var(--s2);border-right:1px solid var(--b1);text-align:left;}
+.rl{font-family:var(--bc);font-size:7px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--w3);margin-bottom:3px;}
+.rn{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--w);line-height:1;}
+
+.stat-row{display:flex;gap:6px;}
+.stat-box{flex:1;background:var(--s1);border:1px solid var(--b1);border-radius:5px;padding:11px 10px;position:relative;}
+.sn{font-family:var(--mono);font-size:21px;font-weight:700;line-height:1;}
+.sl{font-family:var(--bc);font-size:7px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--w3);margin-top:5px;}
+
+/* ══════════════════════════
+   PERFORM COMPONENTS
+══════════════════════════ */
+.dual-gauge{display:flex;gap:8px;}
+.dg-card{flex:1;background:var(--s1);border:1px solid var(--b1);border-radius:6px;padding:14px;text-align:center;}
+.dg-label{font-family:var(--bc);font-size:7px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--w3);margin-bottom:10px;}
+.dg-num{font-family:var(--mono);font-size:32px;font-weight:700;line-height:1;}
+.dg-sub{font-family:var(--bc);font-size:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:5px;}
+.dg-bar{height:4px;background:var(--b2);border-radius:2px;overflow:hidden;margin-top:10px;}
+.dg-fill{height:100%;border-radius:2px;}
+
+.insight-block{background:var(--s1);border:1px solid var(--b1);border-left:2px solid var(--cu);border-radius:5px; transition: all .2s;}
+.insight-block.open{border-color:var(--b3); background:var(--s2);}
+.ib-tag{font-family:var(--bc);font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--cu);margin-bottom:5px;}
+.ib-txt{font-size:11px;font-weight:300;color:var(--w2);line-height:1.65;}
+
+/* ══════════════════════════
+   MARKERS & FLOW COMPONENTS
+══════════════════════════ */
+.wave-card {background:var(--s1); border:1px solid var(--b1); border-radius:4px; padding:14px 16px; overflow:hidden; position:relative;}
+
+.bm-item{background:var(--s1);border:1px solid var(--b1);border-radius:6px;padding:13px 15px;cursor:pointer;transition:all .2s;overflow:hidden;}
+.bm-item.open{border-color:var(--b3);background:var(--s2);}
+.bm-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.bm-cat{font-family:var(--bc);font-size:7px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--w3);margin-bottom:4px;}
+.bm-name{font-family:var(--bc);font-size:18px;font-weight:900;color:var(--w);text-transform:uppercase;letter-spacing:.3px;}
+.bm-val{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1;text-align:right;}
+
+.range-w { margin:11px 0 5px; }
+.range-t { height:4px; background:var(--b2); border-radius:2px; display:flex; position:relative; overflow:hidden; }
+.range-s { height:100%; }
+.range-p { position:absolute; top:-5px; width:14px; height:14px; border-radius:50%; background:var(--w); box-shadow:0 0 0 3px rgba(240,237,232,.12); border:1.5px solid var(--s1); transform:translateX(-50%); transition: left 0.4s ease; }
+.range-ls { display:flex; justify-content:space-between; margin-top:6px; }
+.range-ls span { font-family:var(--bc); font-size:8px; font-weight:600; color:var(--w3); letter-spacing:1px; text-transform:uppercase; }
+
+.seg-ctrl{display:flex;background:var(--s1);border:1px solid var(--b1);border-radius:3px;overflow:hidden;}
+.seg-btn{flex:1;padding:8px 0;font-family:var(--bc);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--w3);text-align:center;cursor:pointer;border-right:1px solid var(--b1);transition:all .15s;}
+.seg-btn:last-child{border-right:none;}
+.seg-btn.active{background:var(--b3);color:var(--w);}
+
+.anno{display:flex;gap:10px;align-items:flex-start;}
+.anno-bar{width:2px;min-height:36px;border-radius:1px;opacity:.8;}
+.anno-txt{font-size:11px;font-weight:300;color:var(--w2);line-height:1.6;padding-bottom:8px;}
+
+.cause-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.cc{background:var(--s1);border:1px solid var(--b1);border-radius:5px;padding:12px;}
+.cc-name{font-family:var(--bc);font-size:13px;font-weight:700;color:var(--w);margin-bottom:2px;}
+.cc-note{font-size:10px;font-weight:300;color:var(--w3);margin-bottom:8px;}
+.cc-bar{height:3px;background:var(--b2);border-radius:1px;overflow:hidden;}
+.cc-fill{height:100%;border-radius:1px;}
+.cc-val{font-family:var(--mono);font-size:8px;color:var(--w4);margin-top:4px;}
+
+/* ══════════════════════════
+   PLAN COMPONENTS
+══════════════════════════ */
+.sec-t{font-family:var(--bc);font-size:8px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--w3);margin-top:6px;margin-bottom:10px;}
+.al{display:flex;flex-direction:column;gap:5px;}
+.action{background:var(--s1);border:1px solid var(--b1);border-radius:5px;padding:11px 13px;display:flex;align-items:center;gap:11px;cursor:pointer; transition:opacity .2s;}
+.action.done{opacity:.4; border-color:var(--good);}
+.at{font-family:var(--bc);font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--w3);background:var(--s2);border:1px solid var(--b1);padding:4px 8px;border-radius:2px;flex-shrink:0;white-space:nowrap;}
+.action.done .at{background:var(--gc); color:var(--good); border-color:var(--gc);}
+.at-cu{color:var(--cu) !important;background:var(--cuc) !important;border-color:var(--cuc) !important;}
+.ab{flex:1;}
+.an{font-family:var(--bc);font-size:13px;font-weight:700;color:var(--w);text-transform:uppercase;letter-spacing:.3px;}
+.action.done .an{text-decoration:line-through;color:var(--w4);}
+.ad{font-size:10px;font-weight:300;color:var(--w3);margin-top:2px;line-height:1.4;}
+.ap{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--good);flex-shrink:0;text-align:right;}
+
+</style>
+</head>
+<body>
+<div class="phone">
+  <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:90px;height:10px;background:#000;border-radius:0 0 8px 8px;z-index:50;"></div>
+
+  <div class="status">
+    <span class="st" id="clock">09:41:22</span>
+    <div style="position:absolute;left:50%;transform:translateX(-50%);top:16px;">
+      <span style="font-family:var(--bc);font-size:13px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:var(--w);text-shadow:0 0 12px var(--cug);">TEMPLE</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="st-live">Signal Active</div>
+    </div>
+  </div>
+
+  <div class="screen active" id="s-home">
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+      <div>
+        <div class="eyebrow" style="margin-bottom:4px;">Sat · 28 Feb · Session 47</div>
+        <div style="font-family:var(--bc);font-size:22px;font-weight:900;color:var(--w);line-height:1.1;text-transform:uppercase;letter-spacing:.5px;">Good Morning<br><span style="color:var(--w2);font-weight:300;">Arjun.</span></div>
+      </div>
+      <div class="chip chip-warn" id="home-live-chip" style="animation:cu-beat 2s infinite; background:transparent; border-color:var(--warn);">● Live</div>
+    </div>
+
+    <div class="cbf-hero">
+      <div class="gauge">
+        <svg viewBox="0 0 180 180">
+          <circle cx="90" cy="90" r="76" fill="none" stroke="var(--b1)" stroke-width="6" transform="rotate(-90 90 90)"/>
+          <circle cx="90" cy="90" r="76" fill="none" stroke="var(--cuc)" stroke-width="12"
+            stroke-dasharray="477" stroke-dashoffset="143" stroke-linecap="round" transform="rotate(-90 90 90)" filter="url(#cglow)"/>
+          <circle cx="90" cy="90" r="76" fill="none" stroke="url(#cuGrad)" stroke-width="6"
+            stroke-dasharray="477" stroke-dashoffset="143" stroke-linecap="round"
+            transform="rotate(-90 90 90)" id="cbf-arc"/>
+          <circle id="cbf-cap" cx="90" cy="14" r="6" fill="var(--cu2)" style="filter:drop-shadow(0 0 5px var(--cu))"/>
+          <defs>
+            <linearGradient id="cuGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#14B8A6"/>
+              <stop offset="100%" stop-color="#2DD4BF"/>
+            </linearGradient>
+            <filter id="cglow"><feGaussianBlur stdDeviation="3"/></filter>
+          </defs>
+        </svg>
+        <div class="gauge-inner">
+          <div class="gauge-num" style="color:var(--warn);" id="cbf-live">70</div>
+          <div class="gauge-unit">Brain Flow™</div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <span class="chip chip-warn" id="home-status-chip">↓ Below Baseline</span>
+        <div style="font-size:11px;font-weight:300;color:var(--w2);line-height:1.55;margin-top:8px;" id="home-desc">12% below your 30-day baseline of 80. Pattern suggests sleep debt as primary contributor.</div>
+      </div>
+
+      <div class="readout">
+        <div class="rbox"><div class="rl">30D Baseline</div><div class="rn" style="color:var(--w3);">80</div></div>
+        <div class="rbox"><div class="rl">Δ Deviation</div><div class="rn" style="color:var(--warn);" id="dev-num">−12%</div><div style="font-size:7px;color:var(--w3);margin-top:2px;">Variance: ±4%</div></div>
+        <div class="rbox"><div class="rl">Gravity Load</div><div class="rn" style="color:var(--cu);">14.2h</div></div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box" style="border-bottom: 2px solid var(--crit);" id="stat-sleep">
+        <div class="sn" style="color:var(--crit);" id="sleep-num">58</div>
+        <div class="sl">Sleep</div>
+        <div style="font-family:var(--bc);font-size:8px;font-weight:600;color:var(--crit);margin-top:3px;" id="sleep-sub">5H 20M</div>
+      </div>
+      <div class="stat-box" style="border-bottom: 2px solid var(--warn);" id="stat-readiness">
+        <div class="sn" style="color:var(--warn);" id="read-num">70</div>
+        <div class="sl">Readiness</div>
+        <div style="font-family:var(--bc);font-size:8px;font-weight:600;color:var(--warn);margin-top:3px;" id="read-sub">Moderate</div>
+      </div>
+      <div class="stat-box" style="border-bottom: 2px solid var(--good);">
+        <div class="sn" style="color:var(--good);">91%</div>
+        <div class="sl">Hydration</div>
+        <div style="font-family:var(--bc);font-size:8px;font-weight:600;color:var(--good);margin-top:3px;">Optimal</div>
+      </div>
+    </div>
+
+    <div id="home-alert-box" class="card-cu" style="border-color:var(--cc); border-left-color:var(--crit);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-family:var(--bc);font-size:7px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--crit);margin-bottom:5px;">Likely Contributor</div>
+          <div id="alert-title" style="font-family:var(--bc);font-size:20px;font-weight:900;color:var(--w);text-transform:uppercase;letter-spacing:.5px;">Sleep Debt</div>
+        </div>
+        <div id="alert-chip" class="chip chip-crit">⚠ Critical</div>
+      </div>
+      <div id="alert-desc" style="font-size:11px;font-weight:300;color:var(--w2);line-height:1.65;margin-bottom:13px;">This is not a causal claim — it is a deviation pattern that has repeated across your data. Tonight's sleep is your highest-leverage recovery action.</div>
+      <div class="btn-cu" onclick="showScreen('s-plan')">View Action Plan →</div>
+    </div>
+
+    <div style="text-align:center; margin-top:10px;">
+      <button onclick="toggleOptimal()" style="background:transparent; border:1px solid var(--b2); color:var(--w3); font-family:var(--mono); font-size:9px; padding:6px 12px; border-radius:4px; cursor:pointer;">[Dev] Toggle Optimal Day State</button>
+    </div>
+
+  </div>
+
+  <div class="screen" id="s-perf">
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:4px;">Performance</div>
+      <div class="h1">Readiness</div>
+    </div>
+
+    <div class="dual-gauge" style="margin-top:4px;">
+      <div class="dg-card primary" id="perf-cns-card" style="background:var(--wc); border-color:var(--wc);">
+        <div class="dg-label">CNS Readiness</div>
+        <div class="dg-num" style="color:var(--warn);" id="perf-cns-num">62</div>
+        <div class="dg-sub" style="color:var(--warn);" id="perf-cns-sub">Neurologically Taxed</div>
+        <div class="dg-bar"><div class="dg-fill" id="perf-cns-fill" style="width:62%;background:linear-gradient(90deg,var(--warn),rgba(139,168,196,.6));"></div></div>
+      </div>
+      <div class="dg-card">
+        <div class="dg-label">Cardio Readiness</div>
+        <div class="dg-num" style="color:var(--good);" id="perf-cardio-num">85</div>
+        <div class="dg-sub" style="color:var(--good);" id="perf-cardio-sub">Cardiovascular OK</div>
+        <div class="dg-bar"><div class="dg-fill" id="perf-cardio-fill" style="width:85%;background:linear-gradient(90deg,var(--good),rgba(45,212,191,.6));"></div></div>
+      </div>
+    </div>
+
+    <div class="insight-block" style="border-color:var(--b2); border-left-color:var(--warn); padding:13px 15px; cursor:pointer;" onclick="this.classList.toggle('open')">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div class="ib-tag" style="color:var(--warn);">Workout Exertion</div>
+          <div class="ib-txt" style="margin-top:4px; padding-right:15px;">Set 4 completed. High neuromuscular effort detected.</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--mono); font-size:24px; font-weight:700; color:var(--warn); line-height:1;">8.5</div>
+          <div class="tap-to-learn">TAP TO LEARN MORE ▾</div>
+        </div>
+      </div>
+      <div class="expand-content">
+        <strong>Neuromuscular Effort:</strong> Measured via electrical spikes in facial and jaw muscles (EMG). When you push to your limit, you subconsciously brace. Temple calculates this to automatically log your true exertion.
+        <div style="font-family:var(--bc); font-size:8px; color:var(--w4); text-transform:uppercase; margin-top:10px; letter-spacing:1px;">← Swipe card to Override</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <div class="eyebrow" style="margin-bottom:4px;">Cerebral Blood Flow</div>
+      <div class="h1">Fluctuation</div>
+    </div>
+
+    <div class="seg-ctrl">
+      <div class="seg-btn active" onclick="setSeg(this, 'chart-today')">Today</div>
+      <div class="seg-btn" onclick="setSeg(this, 'chart-week')">This Week</div>
+      <div class="seg-btn" onclick="setSeg(this, 'chart-month')">30 Days</div>
+    </div>
+
+    <div class="card chart-container active" id="chart-today">
+      <div class="clabel">Brain Flow Score
+        <span style="font-family:var(--mono);font-size:10px;color:var(--w2);">Baseline <span style="color:var(--w);">80</span></span>
+      </div>
+      <svg width="100%" height="110" viewBox="0 0 330 110" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#2DD4BF" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- Y-axis grid + labels: 90=y18, 80=y38, 70=y58, 60=y78 -->
+        <line x1="28" y1="18" x2="330" y2="18" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="22" fill="var(--w4)" font-size="8" font-family="Space Mono">90</text>
+        <line x1="28" y1="38" x2="330" y2="38" stroke="var(--b3)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="42" fill="var(--w3)" font-size="8" font-family="Space Mono">80</text>
+        <line x1="28" y1="58" x2="330" y2="58" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="62" fill="var(--w4)" font-size="8" font-family="Space Mono">70</text>
+        <line x1="28" y1="78" x2="330" y2="78" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="82" fill="var(--w4)" font-size="8" font-family="Space Mono">60</text>
+        <!--
+          X scale: 12AM=x28, 6AM=x108, 12PM=x214, Now=x296 (~4PM)
+          Each hour ≈ 13.3px from x28.
+          Y scale: 90=18, 80=38, 70=58, 60=78 (20px per 10pts)
+          Key events:
+            12AM–6AM  sleep ~58    → x28–108, y82
+            7:30AM    caffeine +9  → x127, y64  (score 67)
+            8:15AM    cortisol −7  → x139, y76  (score 60)
+            Now ~4PM  recovery 70  → x296, y58
+        -->
+        <path id="chart-today-line"
+          d="M28,82 C50,83 80,83 108,82 C116,82 122,66 127,64 C132,62 136,72 139,76 C148,82 180,74 220,66 C255,60 280,58 296,58"
+          fill="none" stroke="var(--good)" stroke-width="2" stroke-linecap="round"/>
+        <path id="chart-today-fill"
+          d="M28,82 C50,83 80,83 108,82 C116,82 122,66 127,64 C132,62 136,72 139,76 C148,82 180,74 220,66 C255,60 280,58 296,58 L296,110 L28,110Z"
+          fill="url(#ag)"/>
+        <circle id="chart-today-dot" cx="296" cy="58" r="5" fill="var(--cu2)" style="filter:drop-shadow(0 0 5px var(--cu))"/>
+        <text x="28"  y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">12AM</text>
+        <text x="102" y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">6AM</text>
+        <text x="205" y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">12PM</text>
+        <text x="284" y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">Now</text>
+      </svg>
+      <div id="chart-today-annos" style="display:flex;flex-direction:column;gap:8px;margin-top:13px;">
+        <div class="anno"><div class="anno-bar" style="background:var(--crit);"></div><div class="anno-txt"><strong>12AM–6AM</strong> — Flow drops during poor sleep. Under 6h sustains suppression through waking.</div></div>
+        <div class="anno"><div class="anno-bar" style="background:var(--warn);"></div><div class="anno-txt"><strong>7:30AM</strong> — Caffeine vasodilation. Temporary +9 pt boost, diminishes within 90 min.</div></div>
+        <div class="anno"><div class="anno-bar" style="background:var(--crit);"></div><div class="anno-txt"><strong>8:15AM</strong> — Cortisol spike. Stress-driven vasoconstriction. −7 pts in under 4 minutes.</div></div>
+      </div>
+    </div>
+
+    <div class="card chart-container" id="chart-week" style="display:none;">
+      <div class="clabel">Brain Flow Score
+        <span style="font-family:var(--mono);font-size:10px;color:var(--w2);">Baseline <span style="color:var(--w);">80</span></span>
+      </div>
+      <svg width="100%" height="110" viewBox="0 0 330 110" preserveAspectRatio="none">
+        <!-- Grid lines with labels -->
+        <line x1="28" y1="18" x2="330" y2="18" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="22" fill="var(--w4)" font-size="8" font-family="Space Mono">90</text>
+        <line x1="28" y1="38" x2="330" y2="38" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="42" fill="var(--w4)" font-size="8" font-family="Space Mono">80</text>
+        <line x1="28" y1="58" x2="330" y2="58" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="62" fill="var(--w4)" font-size="8" font-family="Space Mono">70</text>
+        <line x1="28" y1="78" x2="330" y2="78" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="82" fill="var(--w4)" font-size="8" font-family="Space Mono">60</text>
+        <path id="chart-week-line" d="M28,55 C80,53 100,42 150,38 S200,35 240,32 S280,28 330,25" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round"/>
+        <path id="chart-week-fill" d="M28,55 C80,53 100,42 150,38 S200,35 240,32 S280,28 330,25 L330,110 L28,110Z" fill="url(#ag)"/>
+        <text x="28"  y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">Mon</text>
+        <text x="128" y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">Wed</text>
+        <text x="228" y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">Fri</text>
+        <text x="300" y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">Sun</text>
+      </svg>
+    </div>
+
+    <div class="card chart-container" id="chart-month" style="display:none;">
+      <div class="clabel">Brain Flow Score
+        <span style="font-family:var(--mono);font-size:10px;color:var(--w2);">Baseline <span style="color:var(--w);">80</span></span>
+      </div>
+      <svg width="100%" height="110" viewBox="0 0 330 110" preserveAspectRatio="none">
+        <!-- Grid lines with labels -->
+        <line x1="28" y1="18" x2="330" y2="18" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="22" fill="var(--w4)" font-size="8" font-family="Space Mono">90</text>
+        <line x1="28" y1="38" x2="330" y2="38" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="42" fill="var(--w4)" font-size="8" font-family="Space Mono">80</text>
+        <line x1="28" y1="58" x2="330" y2="58" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="62" fill="var(--w4)" font-size="8" font-family="Space Mono">70</text>
+        <line x1="28" y1="78" x2="330" y2="78" stroke="var(--b2)" stroke-width="1" stroke-dasharray="5 4"/>
+        <text x="0" y="82" fill="var(--w4)" font-size="8" font-family="Space Mono">60</text>
+        <path id="chart-month-line" d="M28,48 L80,44 L130,35 L180,55 L230,40 L280,28 L330,22" fill="none" stroke="var(--good)" stroke-width="1.5" stroke-linecap="round"/>
+        <path id="chart-month-fill" d="M28,48 L80,44 L130,35 L180,55 L230,40 L280,28 L330,22 L330,110 L28,110Z" fill="url(#ag)"/>
+        <text x="28"  y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">1st</text>
+        <text x="168" y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">15th</text>
+        <text x="298" y="108" fill="var(--w4)" font-size="8" font-family="Space Mono">30th</text>
+      </svg>
+    </div>
+
+    <div class="eyebrow">What Affects Brain Flow</div>
+    <div class="cause-grid">
+      <div class="cc"><div class="cc-name">Sleep</div><div class="cc-note">Your #1 driver</div><div class="cc-bar"><div class="cc-fill" style="width:90%;background:var(--crit);"></div></div><div class="cc-val" style="color:var(--crit);">−20 pts worst case</div></div>
+      <div class="cc"><div class="cc-name">Stress</div><div class="cc-note">Fast cortisol</div><div class="cc-bar"><div class="cc-fill" style="width:80%;background:var(--crit);"></div></div><div class="cc-val" style="color:var(--crit);">−14 pts typical</div></div>
+      <div class="cc"><div class="cc-name">Hydration</div><div class="cc-note">Vascular resistance</div><div class="cc-bar"><div class="cc-fill" style="width:65%;background:var(--warn);"></div></div><div class="cc-val" style="color:var(--warn);">−10 pts dehydrated</div></div>
+      <div class="cc"><div class="cc-name">Nutrition</div><div class="cc-note">Cumulative</div><div class="cc-bar"><div class="cc-fill" style="width:55%;background:var(--warn);"></div></div><div class="cc-val" style="color:var(--warn);">−8 pts fasted</div></div>
+      <div class="cc"><div class="cc-name">Breathing</div><div class="cc-note">Immediate lever</div><div class="cc-bar"><div class="cc-fill" style="width:48%;background:var(--good);"></div></div><div class="cc-val" style="color:var(--good);">+6 pts box breath</div></div>
+      <div class="cc">
+        <div class="cc-name" style="color:var(--cu);">Gravity</div>
+        <div class="cc-note">Always active</div>
+        <div class="cc-bar" style="background:rgba(45,212,191,0.1);"><div class="cc-fill" style="width:75%;background:var(--cu);box-shadow:0 0 6px var(--cug);"></div></div>
+        <div class="cc-val" style="color:var(--cu);">−17% upright</div>
+      </div>
+    </div>
+    <div style="height:20px; flex-shrink:0;"></div>
+  </div>
+
+  <div class="screen" id="s-bio">
+    <div>
+      <div class="eyebrow" style="margin-bottom:4px;">Diagnostic Intelligence</div>
+      <div class="h1">Biomarkers</div>
+    </div>
+    <div class="wave-card">
+      <div class="clabel">Live Neural Signal
+        <span class="badge badge-c" style="font-size:7px; background:var(--gc); color:var(--good); border:1px solid rgba(45,212,191,0.2); padding:3px 8px; border-radius:2px; font-family:var(--bc); letter-spacing:2px; text-transform:uppercase;">EEG · Active</span>
+      </div>
+      <canvas id="waveCanvas" width="330" height="50" style="width:100%;height:50px;display:block;"></canvas>
+    </div>
+    <div class="bm-item open" onclick="this.classList.toggle('open')">
+      <div class="bm-top">
+        <div><div class="bm-cat">Primary · Temple Signal</div><div class="bm-name">Brain Flow™</div></div>
+        <div class="bm-r" style="text-align:right;">
+          <div class="bm-val" style="color:var(--warn);" id="bio-cbf-num">70</div>
+          <div class="tap-to-learn">TAP TO LEARN MORE ▾</div>
+        </div>
+      </div>
+      <div class="range-w">
+        <div class="range-t"><div class="range-s" style="width:33%;background:var(--crit);opacity:.8;"></div><div class="range-s" style="width:34%;background:var(--warn);opacity:.8;"></div><div class="range-s" style="width:33%;background:var(--good);opacity:.8;"></div><div id="range-ptr-cbf" class="range-p" style="left:58%;"></div></div>
+        <div class="range-ls"><span>Critical 0–50</span><span>Moderate 51–74</span><span>Optimal 75+</span></div>
+      </div>
+      <div class="expand-content">Temple's primary signal. Measures oxygenated blood volume reaching your brain per unit time. SCR of 87% means low motion artifact, good sensor contact.</div>
+    </div>
+    <div class="bm-item" onclick="this.classList.toggle('open')">
+      <div class="bm-top">
+        <div><div class="bm-cat">Neural · EEG/EMG Signal</div><div class="bm-name">Cognitive Load</div></div>
+        <div class="bm-r" style="text-align:right;">
+          <div class="bm-val" style="color:var(--warn);font-size:16px;padding-top:4px;" id="bio-cog-num">Med</div>
+          <div class="tap-to-learn">TAP TO LEARN MORE ▾</div>
+        </div>
+      </div>
+      <div class="range-w">
+        <div class="range-t"><div class="range-s" style="width:33%;background:var(--good);opacity:.8;"></div><div class="range-s" style="width:34%;background:var(--warn);opacity:.8;"></div><div class="range-s" style="width:33%;background:var(--crit);opacity:.8;"></div><div id="range-ptr-cog" class="range-p" style="left:50%;"></div></div>
+        <div class="range-ls"><span>Low · Rest</span><span>Medium</span><span>High · Peak</span></div>
+      </div>
+      <div class="expand-content">Prefrontal cortex effort via EEG + EMG at the temporal region. Rises with complex lifts.</div>
+    </div>
+    <div class="bm-item" onclick="this.classList.toggle('open')">
+      <div class="bm-top"><div><div class="bm-cat">Cardiovascular</div><div class="bm-name">HRV</div></div>
+      <div class="bm-r" style="text-align:right;"><div class="bm-val" style="color:var(--warn);" id="bio-hrv-num">42<span style="font-size:13px;">ms</span></div><div class="tap-to-learn">TAP TO LEARN MORE ▾</div></div></div>
+      <div class="range-w">
+        <div class="range-t"><div class="range-s" style="width:33%;background:var(--crit);opacity:.8;"></div><div class="range-s" style="width:34%;background:var(--warn);opacity:.8;"></div><div class="range-s" style="width:33%;background:var(--good);opacity:.8;"></div><div id="range-ptr-hrv" class="range-p" style="left:48%;"></div></div>
+        <div class="range-ls"><span>&lt;30ms Poor</span><span>30–55ms OK</span><span>55ms+ Good</span></div>
+      </div>
+      <div class="expand-content">Variation between heartbeats. High HRV = recovered autonomic system. Low HRV = stress or overtraining.</div>
+    </div>
+    <div class="bm-item" onclick="this.classList.toggle('open')">
+      <div class="bm-top"><div><div class="bm-cat">Vascular · Longevity Signal</div><div class="bm-name">CVR</div></div>
+      <div class="bm-r" style="text-align:right;"><div class="bm-val" style="color:var(--good);font-size:18px;padding-top:4px;" id="bio-cvr-num">LOW</div><div class="tap-to-learn">TAP TO LEARN MORE ▾</div></div></div>
+      <div class="range-w">
+        <div class="range-t"><div class="range-s" style="width:33%;background:var(--good);opacity:.8;"></div><div class="range-s" style="width:34%;background:var(--warn);opacity:.8;"></div><div class="range-s" style="width:33%;background:var(--crit);opacity:.8;"></div><div id="range-ptr-cvr" class="range-p" style="left:18%;"></div></div>
+        <div class="range-ls"><span>Low (good)</span><span>Moderate</span><span>High (bad)</span></div>
+      </div>
+      <div class="expand-content">How hard your arteries work to push blood through cerebral vessels. Low = free flow.</div>
+    </div>
+    <div style="height:30px; flex-shrink:0;"></div>
+  </div>
+
+  <div class="screen" id="s-plan">
+    <div>
+      <div class="eyebrow" style="margin-bottom:4px;">Today</div>
+      <div class="h1">Action Plan</div>
+    </div>
+    <div style="background:var(--s2); border:1px solid var(--b2); border-radius:6px; padding:16px;">
+      <div style="display:flex; justify-content:space-between; font-family:var(--bc); font-size:10px; font-weight:700; text-transform:uppercase; color:var(--w3);">
+        <span id="plan-progress-text">1 of 5 Complete</span>
+        <span id="plan-est-score" style="color:var(--warn);">Target Est: ~70</span>
+      </div>
+      <div style="height:4px; background:rgba(255,255,255,0.05); margin-top:8px; border-radius:2px; overflow:hidden;">
+        <div id="plan-progress-bar" style="height:100%; width:20%; background:var(--warn); transition:width 0.4s ease, background 0.4s ease;"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px;" onclick="this.classList.toggle('open')">
+      <div class="clabel" id="nvr-title">Neurovascular Reserve
+        <span class="chip chip-neu" style="font-size:7px;">HRV Equivalent · Brain</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:10px;">
+        <div style="font-size:11px;font-weight:300;color:var(--w2); max-width:65%; margin-top:4px;" id="nvr-desc">How much your Brain Flow can surge in response to a stimulus.</div>
+        <div style="text-align:right;">
+          <div class="bm-val" style="color:var(--cu);" id="plan-nvr-val">+18pt</div>
+          <div class="tap-to-learn">TAP TO LEARN MORE ▾</div>
+        </div>
+      </div>
+      <div class="expand-content">NVR measures how effectively your brain can command rapid dilation of blood vessels to meet immediate cognitive or physical demands. High NVR means you are perfectly primed.</div>
+    </div>
+    <div id="plan-actions-state">
+    <div class="sec-t" style="margin-top:12px;">Immediate · Fast Acting</div>
+    <div class="al">
+      <div class="action done"><div class="at">Done</div><div class="ab"><div class="an">Morning Coffee</div></div><div class="ap" style="color:var(--w3); font-size:16px;">✓</div></div>
+      <div class="action active-action" onclick="logAction(this, 3)"><div class="at">Now</div><div class="ab"><div class="an">Drink 500ml Water</div><div class="ad">Dehydration raises vascular resistance.</div></div><div class="ap"><span style="color:var(--good);font-size:13px;">+3</span><br><span style="font-size:7px;color:var(--w3);text-transform:uppercase;">SCR 88%</span></div></div>
+      <div class="action active-action" onclick="logAction(this, 4)"><div class="at">Now</div><div class="ab"><div class="an">Box Breathe · 4 Cycles</div><div class="ad">CO₂ dilates cerebral vessels.</div></div><div class="ap"><span style="color:var(--good);font-size:13px;">+4</span><br><span style="font-size:7px;color:var(--w3);text-transform:uppercase;">SCR 91%</span></div></div>
+    </div>
+    <div class="sec-t">Anti-Gravity · High Leverage</div>
+    <div class="al">
+      <div class="action active-action" onclick="logAction(this, 8)"><div class="at at-cu">↓ Invert</div><div class="ab"><div class="an">Passive Inversion</div><div class="ad">Reverses gravity's suppression.</div></div><div class="ap"><span style="color:var(--cu);font-size:13px;">+8</span><br><span style="font-size:7px;color:var(--w3);text-transform:uppercase;">SCR 82%</span></div></div>
+    </div>
+    </div>
+
+    <div id="plan-optimal-state" style="display:none; flex-direction:column; gap:10px;">
+      <div style="background:var(--gc); border:1px solid var(--good); border-radius:8px; padding:20px; text-align:center;">
+        <div style="font-size:28px; margin-bottom:8px;">✦</div>
+        <div style="font-family:var(--bc); font-size:13px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--good); margin-bottom:6px;">Peak State · Score 91</div>
+        <div style="font-size:12px; font-weight:300; color:var(--w2); line-height:1.7;">Your Brain Flow is at its highest measured baseline. There's nothing to fix today — keep doing what you're doing.</div>
+      </div>
+      <div class="sec-t">What Got You Here · Keep This Up</div>
+      <div class="al">
+        <div class="action done"><div class="at">Habit</div><div class="ab"><div class="an">8h+ Sleep</div><div class="ad">Your #1 Brain Flow lever. Don't compromise this.</div></div><div class="ap" style="color:var(--good); font-size:16px;">✓</div></div>
+        <div class="action done"><div class="at">Habit</div><div class="ab"><div class="an">Morning Inversion</div><div class="ad">Pre-session inversion is priming your peak output.</div></div><div class="ap" style="color:var(--good); font-size:16px;">✓</div></div>
+        <div class="action done"><div class="at">Habit</div><div class="ab"><div class="an">Hourly Movement Breaks</div><div class="ad">Offsetting gravity load all day. Keep the cadence.</div></div><div class="ap" style="color:var(--good); font-size:16px;">✓</div></div>
+      </div>
+    </div>
+    <div style="height:20px; flex-shrink:0;"></div>
+  </div>
+
+  <div class="nav">
+    <div class="ni active" onclick="showScreen('s-home')" id="ni-home"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</div>
+    <div class="ni" onclick="showScreen('s-perf')" id="ni-perf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Perform</div>
+    <div class="ni" onclick="showScreen('s-bio')" id="ni-bio"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>Markers</div>
+    <div class="ni" onclick="showScreen('s-plan')" id="ni-plan"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>Plan</div>
+  </div>
+</div>
+
+<script>
+const screens=['s-home','s-perf','s-bio','s-plan'];
+const navids= ['ni-home','ni-perf','ni-bio','ni-plan'];
+function showScreen(id){
+  screens.forEach(s=>{const e=document.getElementById(s);if(e)e.classList.remove('active');});
+  navids.forEach(n=>{const e=document.getElementById(n);if(e)e.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  const ni='ni-'+id.replace('s-','');
+  if(document.getElementById(ni))document.getElementById(ni).classList.add('active');
+}
+
+function setSeg(el, chartId){
+  el.parentElement.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.chart-container').forEach(c=>c.style.display='none');
+  document.getElementById(chartId).style.display='block';
+}
+
+let actionsTotal = 5;
+let actionsDone = 1;
+let estScore = 70;
+
+function logAction(el, boost) {
+  const atEl = el.querySelector('.at');
+  if(el.classList.contains('done')) {
+    el.classList.remove('done');
+    atEl.textContent = el.dataset.origAt || 'Now';
+    actionsDone--; estScore -= boost;
+  } else {
+    el.dataset.origAt = atEl.textContent;
+    el.classList.add('done');
+    atEl.textContent = 'Done';
+    actionsDone++; estScore += boost;
+  }
+  const pct = (actionsDone / actionsTotal) * 100;
+  document.getElementById('plan-progress-text').textContent = `${actionsDone} of ${actionsTotal} Complete`;
+  document.getElementById('plan-est-score').textContent = `Target Est: ~${estScore}`;
+  const bar = document.getElementById('plan-progress-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = estScore >= 80 ? 'var(--good)' : estScore >= 75 ? 'var(--cu2)' : 'var(--warn)';
+  document.getElementById('plan-est-score').style.color = bar.style.background;
+}
+
+let cbfVal = 70;
+let baseTarget = 70;
+let isOptimal = false;
+
+function tickCBF(){
+  let noiseTarget = Math.max(baseTarget-1, Math.min(baseTarget+1, baseTarget + (Math.random()-.5)*1.0));
+  cbfVal += (noiseTarget - cbfVal) * 0.05;
+  const v = Math.round(cbfVal);
+  document.getElementById('cbf-live').textContent = v;
+  const arc = document.getElementById('cbf-arc');
+  const cap = document.getElementById('cbf-cap');
+  if(arc){
+    const circ = 477.5;
+    arc.setAttribute('stroke-dashoffset', circ * (1 - v/100 * 0.88));
+    if(cap){
+      const deg = (v/100 * 0.88 * 360) - 90;
+      cap.setAttribute('transform', `rotate(${deg+90} 90 90)`);
+    }
+  }
+  requestAnimationFrame(tickCBF);
+}
+tickCBF();
+
+const waveCanvas = document.getElementById('waveCanvas');
+const wCtx = waveCanvas ? waveCanvas.getContext('2d') : null;
+let waveT = 0;
+function drawWave(){
+  if(!wCtx) return;
+  const W = waveCanvas.width, H = waveCanvas.height;
+  wCtx.clearRect(0,0,W,H);
+  wCtx.strokeStyle = 'rgba(45, 212, 191, 0.8)'; wCtx.lineWidth = 1.5;
+  wCtx.beginPath();
+  for(let x=0; x<W; x++){
+    const t = (x/W)*8*Math.PI + waveT;
+    const y = H/2 + Math.sin(t)*8 + Math.sin(t*2.3)*4;
+    if(x===0) wCtx.moveTo(x,y); else wCtx.lineTo(x,y);
+  }
+  wCtx.stroke();
+  waveT += 0.05;
+  requestAnimationFrame(drawWave);
+}
+drawWave();
+
+function toggleOptimal() {
+  isOptimal = !isOptimal;
+  
+  // Base State Values
+  baseTarget = isOptimal ? 91 : 70;
+  
+  // Home Tab Elements
+  document.getElementById('cbf-live').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  document.getElementById('home-status-chip').className = isOptimal ? 'chip chip-good' : 'chip chip-warn';
+  document.getElementById('home-status-chip').textContent = isOptimal ? '↑ Fully Primed' : '↓ Below Baseline';
+  document.getElementById('dev-num').textContent = isOptimal ? '+11%' : '−12%';
+  document.getElementById('dev-num').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  
+  // Stats Row (Home)
+  document.getElementById('sleep-num').textContent = isOptimal ? '94' : '58';
+  document.getElementById('sleep-num').style.color = isOptimal ? 'var(--good)' : 'var(--crit)';
+  document.getElementById('sleep-sub').textContent = isOptimal ? '8H 10M' : '5H 20M';
+  document.getElementById('sleep-sub').style.color = isOptimal ? 'var(--good)' : 'var(--crit)';
+  document.getElementById('stat-sleep').style.borderBottomColor = isOptimal ? 'var(--good)' : 'var(--crit)';
+  
+  document.getElementById('read-num').textContent = isOptimal ? '91' : '70';
+  document.getElementById('read-num').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  document.getElementById('read-sub').textContent = isOptimal ? 'Peak' : 'Moderate';
+  document.getElementById('read-sub').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  document.getElementById('stat-readiness').style.borderBottomColor = isOptimal ? 'var(--good)' : 'var(--warn)';
+
+  // Alert Box (Home)
+  const alertBox = document.getElementById('home-alert-box');
+  if(isOptimal) {
+      alertBox.style.borderLeftColor = 'var(--good)';
+      alertBox.style.borderColor = 'var(--gc)';
+      document.getElementById('alert-title').textContent = 'Peak State';
+      document.getElementById('alert-chip').className = 'chip chip-good';
+      document.getElementById('alert-chip').textContent = '✓ Optimal';
+      document.getElementById('alert-desc').textContent = 'Your neural perfusion and autonomic recovery are in sync. Today is an ideal day for high-intensity training.';
+  } else {
+      alertBox.style.borderLeftColor = 'var(--crit)';
+      alertBox.style.borderColor = 'var(--cc)';
+      document.getElementById('alert-title').textContent = 'Sleep Debt';
+      document.getElementById('alert-chip').className = 'chip chip-crit';
+      document.getElementById('alert-chip').textContent = '⚠ Critical';
+      document.getElementById('alert-desc').textContent = 'This is not a causal claim — it is a deviation pattern that has repeated across your data. Tonight\'s sleep is your highest-leverage recovery action.';
+  }
+
+  // Perform Tab
+  document.getElementById('perf-cns-num').textContent = isOptimal ? '88' : '62';
+  document.getElementById('perf-cns-num').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  document.getElementById('perf-cns-sub').textContent = isOptimal ? 'Peak Stability' : 'Neurologically Taxed';
+  document.getElementById('perf-cns-sub').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  document.getElementById('perf-cns-card').style.background = isOptimal ? 'var(--gc)' : 'var(--wc)';
+  document.getElementById('perf-cns-card').style.borderColor = isOptimal ? 'var(--gc)' : 'var(--wc)';
+  document.getElementById('perf-cns-fill').style.width = isOptimal ? '88%' : '62%';
+  document.getElementById('perf-cns-fill').style.background = isOptimal ? 'linear-gradient(90deg,var(--good),rgba(45,212,191,.6))' : 'linear-gradient(90deg,var(--warn),rgba(139,168,196,.6))';
+
+  document.getElementById('perf-cardio-num').textContent = isOptimal ? '95' : '85';
+  document.getElementById('perf-cardio-sub').textContent = isOptimal ? 'Fully Recovered' : 'Cardiovascular OK';
+  document.getElementById('perf-cardio-fill').style.width = isOptimal ? '95%' : '85%';
+
+  // Markers Tab
+  document.getElementById('bio-cbf-num').textContent = isOptimal ? '91' : '70';
+  document.getElementById('bio-cbf-num').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  document.getElementById('range-ptr-cbf').style.left = isOptimal ? '85%' : '58%';
+
+  document.getElementById('bio-cog-num').textContent = isOptimal ? 'Low' : 'Med';
+  document.getElementById('bio-cog-num').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  document.getElementById('range-ptr-cog').style.left = isOptimal ? '20%' : '50%';
+
+  document.getElementById('bio-hrv-num').innerHTML = isOptimal ? '65<span style="font-size:13px;">ms</span>' : '42<span style="font-size:13px;">ms</span>';
+  document.getElementById('bio-hrv-num').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  document.getElementById('range-ptr-hrv').style.left = isOptimal ? '80%' : '48%';
+
+  document.getElementById('bio-cvr-num').textContent = isOptimal ? 'OPTIMAL' : 'LOW';
+  document.getElementById('range-ptr-cvr').style.left = isOptimal ? '10%' : '18%';
+
+  // Plan Tab
+  estScore = isOptimal ? 91 : 70;
+  document.getElementById('plan-est-score').textContent = isOptimal ? 'Score · 91 / 100' : `Target Est: ~${estScore}`;
+  document.getElementById('plan-est-score').style.color = isOptimal ? 'var(--good)' : 'var(--warn)';
+  document.getElementById('plan-nvr-val').textContent = isOptimal ? '+24pt' : '+18pt';
+
+  // Swap action vs optimal state
+  const actionsEl = document.getElementById('plan-actions-state');
+  const optimalEl = document.getElementById('plan-optimal-state');
+  if (isOptimal) {
+    actionsEl.style.display = 'none';
+    optimalEl.style.display = 'flex';
+    document.getElementById('plan-progress-text').textContent = 'Peak State · All Habits Active';
+    document.getElementById('plan-progress-bar').style.width = '100%';
+    document.getElementById('plan-progress-bar').style.background = 'var(--good)';
+  } else {
+    actionsEl.style.display = 'block';
+    optimalEl.style.display = 'none';
+    document.getElementById('plan-progress-text').textContent = '1 of 5 Complete';
+    document.getElementById('plan-progress-bar').style.width = '20%';
+    document.getElementById('plan-progress-bar').style.background = 'var(--warn)';
+  }
+
+  // ── Fluctuation Charts sync ──────────────────────────────────────
+  // Y scale: 90=y18, 80=y38, 70=y58, 60=y78 (20px per 10pts)
+  // X scale: 12AM=x28, 6AM=x108, 12PM=x214, Now=x296
+  const todayLinePath = isOptimal
+    // Optimal: score 91 all day, flat high line just above the 90 grid (y≈16)
+    ? 'M28,16 C80,15 140,15 200,15 C240,15 270,16 296,16'
+    // Default: sleep debt 58 (y82), caffeine spike 67 (y64) at 7:30AM, cortisol dip 60 (y76) at 8:15AM, recovery to 70 (y58) at Now
+    : 'M28,82 C50,83 80,83 108,82 C116,82 122,66 127,64 C132,62 136,72 139,76 C148,82 180,74 220,66 C255,60 280,58 296,58';
+  const todayFillPath = isOptimal
+    ? 'M28,16 C80,15 140,15 200,15 C240,15 270,16 296,16 L296,110 L28,110Z'
+    : 'M28,82 C50,83 80,83 108,82 C116,82 122,66 127,64 C132,62 136,72 139,76 C148,82 180,74 220,66 C255,60 280,58 296,58 L296,110 L28,110Z';
+  document.getElementById('chart-today-line').setAttribute('d', todayLinePath);
+  document.getElementById('chart-today-fill').setAttribute('d', todayFillPath);
+  document.getElementById('chart-today-dot').setAttribute('cy', isOptimal ? '16' : '58');
+  document.getElementById('chart-today-dot').setAttribute('cx', '296');
+
+  // Week chart: default shows upward recovery trend (~68→75), optimal shows high flat (~91)
+  const weekLinePath = isOptimal
+    ? 'M28,18 C80,17 130,16 180,15 S240,15 330,14'
+    : 'M28,55 C80,53 100,48 150,44 S200,41 240,39 S280,38 330,36';
+  const weekFillPath = isOptimal
+    ? 'M28,18 C80,17 130,16 180,15 S240,15 330,14 L330,110 L28,110Z'
+    : 'M28,55 C80,53 100,48 150,44 S200,41 240,39 S280,38 330,36 L330,110 L28,110Z';
+  document.getElementById('chart-week-line').setAttribute('d', weekLinePath);
+  document.getElementById('chart-week-line').setAttribute('stroke', isOptimal ? 'var(--good)' : 'var(--warn)');
+  document.getElementById('chart-week-fill').setAttribute('d', weekFillPath);
+
+  // Month chart: default shows variable ~60–80 range, optimal shows improving ~80–91 trend
+  const monthLinePath = isOptimal
+    ? 'M28,38 L80,32 L130,26 L180,20 L230,17 L280,15 L330,14'
+    : 'M28,58 L80,52 L130,38 L180,62 L230,44 L280,40 L330,36';
+  const monthFillPath = isOptimal
+    ? 'M28,38 L80,32 L130,26 L180,20 L230,17 L280,15 L330,14 L330,110 L28,110Z'
+    : 'M28,58 L80,52 L130,38 L180,62 L230,44 L280,40 L330,36 L330,110 L28,110Z';
+  document.getElementById('chart-month-line').setAttribute('d', monthLinePath);
+  document.getElementById('chart-month-fill').setAttribute('d', monthFillPath);
+
+  document.getElementById('chart-today-annos').innerHTML = isOptimal
+    ? `<div class="anno"><div class="anno-bar" style="background:var(--good);"></div><div class="anno-txt"><strong>12AM–8AM</strong> — 8h 10m sleep. Brain Flow sustained through deep sleep cycles. Woke at full baseline.</div></div>
+       <div class="anno"><div class="anno-bar" style="background:var(--good);"></div><div class="anno-txt"><strong>8:30AM</strong> — Inversion session pre-workout. +20% acute CBF boost. Primed for peak output.</div></div>
+       <div class="anno"><div class="anno-bar" style="background:var(--cu);"></div><div class="anno-txt"><strong>All Day</strong> — Gravity load offset by movement breaks. No cortisol spike detected. Flow holding above baseline.</div></div>`
+    : `<div class="anno"><div class="anno-bar" style="background:var(--crit);"></div><div class="anno-txt"><strong>12AM–6AM</strong> — Flow drops during poor sleep. Under 6h sustains suppression through waking.</div></div>
+       <div class="anno"><div class="anno-bar" style="background:var(--warn);"></div><div class="anno-txt"><strong>7:30AM</strong> — Caffeine vasodilation. Temporary +9 pt boost, diminishes within 90 min.</div></div>
+       <div class="anno"><div class="anno-bar" style="background:var(--crit);"></div><div class="anno-txt"><strong>8:15AM</strong> — Cortisol spike. Stress-driven vasoconstriction. −7 pts in under 4 minutes.</div></div>`;
+}
+
+setInterval(()=>{
+  const cl=document.getElementById('clock'); if(!cl)return;
+  const n=new Date();
+  cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+},1000);
+</script>
+</body>
+</html>
